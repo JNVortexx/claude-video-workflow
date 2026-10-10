@@ -1,9 +1,11 @@
 #!/bin/bash
-# 4K: PNG-Frames → ProRes HQ → x264 2-Pass 15 Mbit/s + BT.709-Tags (wie starter/render.sh)
+# 4K: Text-Ebene (ProRes 4444 mit Alpha, PNG-Frames, scale 2) → ffmpeg legt sie auf das Lanczos-hochskalierte Video
+# → x264 2-Pass 15 Mbit/s + BT.709-Tags (wie starter/render.sh)
 set -e
 mkdir -p out ../Export
 TAG=(-bsf:v h264_metadata=colour_primaries=1:transfer_characteristics=1:matrix_coefficients=1:video_full_range_flag=1 -color_primaries bt709 -color_trc bt709 -colorspace bt709 -color_range pc)
-npx remotion render src/index.ts Pushups out/hq.mov --codec=prores --prores-profile=hq --image-format=png --scale=2 --concurrency=3 --timeout=180000 --log=error
+npx remotion render src/index.ts PushupsOverlay out/overlay.mov --codec=prores --prores-profile=4444 --pixel-format=yuva444p10le --image-format=png --scale=2 --concurrency=3 --log=error
+ffmpeg -hide_banner -v error -y -i public/plate.mp4 -i out/overlay.mov -filter_complex "[0:v][1:v]overlay=format=auto,format=yuv422p10le" -c:v prores_ks -profile:v 3 out/hq.mov
 X=(-c:v libx264 -preset slower -tune film -b:v 15M -maxrate 22M -bufsize 30M -pix_fmt yuvj420p -x264-params aq-mode=3:aq-strength=0.9:deblock=-1,-1)
 ffmpeg -hide_banner -v error -y -i out/hq.mov "${X[@]}" -pass 1 -passlogfile out/pass -an -f mp4 /dev/null
 ffmpeg -hide_banner -v error -y -i out/hq.mov -i out/mix.wav -map 0:v -map 1:a "${X[@]}" -pass 2 -passlogfile out/pass "${TAG[@]}" -c:a aac -b:a 320k -movflags +faststart ../Export/Pushups_fertig_4K.mp4

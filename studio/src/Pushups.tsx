@@ -127,14 +127,14 @@ const FX: Fx[] = (() => {
   return CHUNKS.map((c) => (c.box ? "punch" : PLAIN[p++ % PLAIN.length]));
 })();
 
-export const Pushups: React.FC = () => {
+export const Pushups: React.FC<{ overlay?: boolean }> = ({ overlay = false }) => {
   const frame = useCurrentFrame();
   const t = frame / FPS;
   // genau ein Chunk sichtbar: vom ersten Wort bis zum ersten Wort des nächsten Chunks
   const idx = CHUNKS.findIndex((c, i) => t >= c.words[0].t - 1 / FPS && (i === CHUNKS.length - 1 || t < CHUNKS[i + 1].words[0].t - 1 / FPS));
   return (
-    <AbsoluteFill style={{ background: "black" }}>
-      <OffthreadVideo src={staticFile("plate.mp4")} muted transparent style={{ width: "100%", height: "100%" }} />
+    <AbsoluteFill style={{ background: overlay ? "transparent" : "black" }}>
+      {!overlay && <OffthreadVideo src={staticFile("plate.mp4")} muted transparent style={{ width: "100%", height: "100%" }} />}
       {idx >= 0 && <ChunkEl key={idx} ch={CHUNKS[idx]} frame={frame} fx={FX[idx]} />}
       <Counter frame={frame} />
     </AbsoluteFill>
