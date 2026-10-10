@@ -1,10 +1,21 @@
 import React from "react";
-import { AbsoluteFill, Easing, OffthreadVideo, interpolate, staticFile, useCurrentFrame } from "remotion";
-import { loadFont } from "@remotion/fonts";
+import { AbsoluteFill, Easing, OffthreadVideo, continueRender, delayRender, interpolate, staticFile, useCurrentFrame } from "remotion";
+import { MONTSERRAT_B64 } from "./fontData";
 import { BROLL_START, CHUNKS, Chunk, REPS, REP_TARGET } from "./beats";
 
 const fontFamily = "Montserrat";
-loadFont({ family: fontFamily, url: staticFile("fonts/Montserrat.woff2"), weight: "700 900" });
+// Schrift als Data-URL eingebettet (kein Netzwerk-Request pro Render-Tab → keine delayRender-Timeouts)
+if (typeof document !== "undefined" && !document.getElementById("font-montserrat")) {
+  const h = delayRender("Montserrat");
+  const face = new FontFace(fontFamily, `url(data:font/woff2;base64,${MONTSERRAT_B64})`, { weight: "700 900" });
+  face.load().then((f) => {
+    document.fonts.add(f);
+    continueRender(h);
+  });
+  const marker = document.createElement("meta");
+  marker.id = "font-montserrat";
+  document.head.appendChild(marker);
+}
 
 export const FPS = 24;
 export const DURATION = 574;
